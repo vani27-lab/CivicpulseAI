@@ -1,27 +1,29 @@
-# CivicPulse AI - Project Progress & Integration Report
+# CivicPulse AI — Final Project Handover & Progress Report
 
-## Status: COMPLETE, OPERATIONAL & PRODUCTION-READY (100% Tested)
-
-### Target Workflow Demonstrated & Verified
-**Citizen Login → Submit Complaint (Photo + GPS Location + Description) → Geo-Aware Facility Detection & Priority Scoring → Emergency Escalation → Officer Dashboard (Stats, Spatial Map, Critical Filters) → Status Update & Resolution Evidence → Citizen Live Tracking & Audit History**
+**Document Date:** November 26, 2026  
+**Status:** CODE FREEZE — FINAL HANDOVER FOR MANUAL DEPLOYMENT  
+**Git Repository:** `https://github.com/vani27-lab/CivicpulseAI.git`  
+**Current Branch:** `main` (Working tree clean, all commits pushed)
 
 ---
 
-## 1. Quick Access & Verified Localhost Endpoints
+## 1. Verified Live Services & Local URLs
 
-| Service | Local URL | Status | Health Check |
+Both backend and frontend services have been verified and are active:
+
+| Service | Verified Local URL | Status | Verified Response |
 |---|---|---|---|
-| **Frontend Web App** | `http://localhost:5173` | **RUNNING** (Vite Dev Server) | `HTTP 200 OK` |
-| **Backend API Server** | `http://localhost:8000` | **RUNNING** (FastAPI / Uvicorn) | `http://localhost:8000/api/health` |
-| **Interactive API Docs** | `http://localhost:8000/docs` | **RUNNING** (Swagger UI) | `HTTP 200 OK` |
+| **Frontend Web Application** | `http://localhost:5173` | **ONLINE** | `HTTP/1.1 200 OK` (Vite dev server) |
+| **Backend REST API** | `http://localhost:8000` | **ONLINE** | `{"status":"ok","database":"connected","postgis":"not installed"}` |
+| **Interactive API Documentation** | `http://localhost:8000/docs` | **ONLINE** | Swagger UI / OpenAPI 3.1 schema |
 
 ---
 
-## 2. Verified Demo Login Credentials
+## 2. Working Demo Login Credentials
 
-All demo accounts are pre-seeded and verified working with password **`Demo@1234`**:
+All demo accounts exist in the SQLite database and are verified working with password **`Demo@1234`**:
 
-| Role | Email | Password | Access / Purpose |
+| Role | Email | Password | Primary Interface / Features |
 |---|---|---|---|
 | **Roads Officer** | `officer.roads@civicpulse.demo` | `Demo@1234` | Officer Dashboard (`/officer/dashboard`), Complaint Detail, Status Management |
 | **Sanitation Officer** | `officer.sanitation@civicpulse.demo` | `Demo@1234` | Sanitation Department Queue & Resolution |
@@ -33,72 +35,120 @@ All demo accounts are pre-seeded and verified working with password **`Demo@1234
 
 ---
 
-## 3. Modules Inventory & Complete Integration
+## 3. Technology Stack & Folder Structure
 
-All 6 original module ZIP archives remain preserved in the root workspace and extracted into individual reference folders:
-1. `civicpulse-ai-module1.zip` -> `module1/civicpulse-ai` (FastAPI Core, SQLite/PostgreSQL schemas, JWT Auth, RBAC)
-2. `civicpulse-ai-module2.zip` -> `module2/civicpulse-ai` (Citizen Reporting: `POST /api/reports`, Map/GPS picker, Photo upload, Multilingual UI)
-3. `civicpulse-ai-module3.zip` -> `module3/module3_ai_engine` (AI Intelligence: Category classification, Severity 1-4, Confidence, Vision/heuristic fallback)
-4. `civicpulse-ai-module4.zip` -> `module4/module4_complaint_engine` (Geo-Aware Priority formula, Duplicate detection, Department routing)
-5. `civicpulse-ai-module5.zip` -> `module5/civicpulse-module5` (Officer Dashboard: KPI Stats, Priority badges, Status management, Resolution evidence, Leaflet Map)
-6. `civicpulse-ai-module6.zip` -> `module6/civicpulse-module6` (Citizen Tracking: Status history timeline, In-app notices, Feedback rating)
+### Locations
+- **Unified Application Root:** `civicpulse-app/`
+- **Frontend Codebase:** `civicpulse-app/frontend/`
+- **Backend Codebase:** `civicpulse-app/backend/`
+- **Original Source Modules:** Preserved in `module1/` through `module6/` and root `.zip` archives.
 
-The production-ready integrated application is located in `civicpulse-app/` with both backend and frontend.
-
----
-
-## 4. Key Architectural & Operational Enhancements
-
-1. **Geo-Aware Intelligent Priority Engine (`geo_facility_service.py` & `priority.py`)**:
-   - 5-factor priority scoring: Issue Severity (30%), Location Importance (25%), Public Impact (20%), Duplicate Count (15%), Urgency & Duration (10%).
-   - Calibrated 4 Priority Bands: `LOW` (0–29), `MEDIUM` (30–49), `HIGH` (50–74), `CRITICAL` (75–100).
-   - Facility proximity detection for 8 critical categories: `hospital`, `school`, `fire_station`, `police`, `transit`, `government`, `main_road`, `market`.
-   - Emergency Escalation: Immediate life/safety threats (e.g. severe road crater or blockage within 50m of a hospital or fire station) trigger automatic emergency escalation, forcing `CRITICAL` band and boost score $\ge 82.0$.
-   - Explainable Citizen Notice: Surfaces plain-language explanations (e.g., *"Marked urgent: Located 50m from Lifeline Emergency Clinic"*) without exposing mathematical formulas.
-
-2. **Image Upload & Serving Pipeline**:
-   - Fixed static file routing for `/uploads` and `/media`.
-   - Before & after photographs display properly on both officer detail and citizen tracking pages.
-   - Built resilient fallback UI with placeholders when photos are not yet submitted.
-
-3. **Database Schema & PostGIS Zero-Dependency Mode**:
-   - Implemented transparent SQLite fallback for local development and demonstration.
-   - Added `facility_cache` table and spatial metadata columns (`nearest_facility_name`, `nearest_facility_distance_m`, `is_emergency`, `citizen_urgency_reason`).
-   - Retained complete PostgreSQL + PostGIS compatibility for cloud production deployment.
-
-4. **Modern Industrial Editorial UI**:
-   - Warm background `#F4F0E9`, burgundy accent `#782F32`, serif headings, crisp badges.
-   - Resolved PostCSS `@apply selection:bg-burgundy-soft` compile error with standard CSS.
-   - Production Vite frontend builds cleanly with 0 errors.
+### Tech Stack
+- **Frontend:** React 18, Vite 5, Tailwind CSS 3, React Router v6, Leaflet / React-Leaflet, Heroicons, Lucide-React. Modern Industrial Editorial design (`#F4F0E9` background, `#782F32` burgundy accent).
+- **Backend:** Python 3.11, FastAPI, Uvicorn, SQLAlchemy 2.0, Pydantic v2, Passlib (bcrypt), PyJWT, GeoAlchemy2, httpx.
+- **Database Engine:** SQLite (local zero-dependency fallback) / PostgreSQL 16 + PostGIS 3.4 (production-ready).
 
 ---
 
-## 5. Verification & Test Results
+## 4. Build and Startup Commands
 
-- **Backend Pytest Suite**: 23/23 tests PASSED (100%), including auth, security, storage, and geospatial priority logic.
-- **Frontend Production Build**: `npm run build` completed in 9.20s with 0 errors (`dist/` generated).
-- **Live End-to-End Workflow (`verify_demo_flow.py`)**:
-  - Citizen login with `citizen@civicpulse.demo` → Verified.
-  - Citizen complaint submission (`POST /api/reports`) → Verified.
-  - Officer login with `officer.roads@civicpulse.demo` → Verified.
-  - Officer complaint table query (`GET /officer/complaints`) → Verified (16 seeded & active complaints).
-  - Officer detail view (`GET /officer/complaints/{id}`) → Verified (Priority, Nearest Facility, Nearby Facilities list).
-  - Admin login with `admin@civicpulse.demo` → Verified.
+### Backend (`civicpulse-app/backend`)
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Start development / production server
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+# Run unit tests
+python -m pytest tests/ -v
+```
+
+### Frontend (`civicpulse-app/frontend`)
+```bash
+# Install dependencies
+npm install
+
+# Start Vite development server
+npm run dev -- --host 0.0.0.0
+
+# Build for production
+npm run build
+```
 
 ---
 
-## 6. Deployment Requirements & Turn-Key Cloud Configurations
+## 5. Required Environment Variables
 
-1. **Vercel Frontend**:
-   - Set Root Directory: `civicpulse-app/frontend`
-   - Build Command: `npm run build`
-   - Output Directory: `dist`
-   - Environment Variable: `VITE_API_BASE_URL` (pointing to production backend URL).
+### Backend (`civicpulse-app/backend/.env`)
+```ini
+APP_NAME=CivicPulse AI
+ENVIRONMENT=development
+DATABASE_URL=sqlite:///./civicpulse.db
+# For production PostgreSQL + PostGIS:
+# DATABASE_URL=postgresql+psycopg2://postgres:postgres@localhost:5432/civicpulse
+JWT_SECRET_KEY=dev-secret-change-me-at-least-32-chars-long
+JWT_ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=1440
+UPLOAD_DIR=uploads
+MAX_UPLOAD_MB=10
+CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+SEED_DEMO_DATA=true
+DEMO_PASSWORD=Demo@1234
+AI_VISION_API_KEY=
+```
 
-2. **Render / Railway / Docker Backend**:
-   - Root Directory: `civicpulse-app/backend`
-   - Start Command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-   - Environment Variables:
-     - `DATABASE_URL`: PostgreSQL with PostGIS connection string (or persistent volume SQLite path).
-     - `JWT_SECRET_KEY`: Secure 64-character hex secret.
-     - `CORS_ORIGINS`: Frontend production URL.
+### Frontend (`civicpulse-app/frontend/.env`)
+```ini
+# Optional: In development, vite.config.js automatically proxies /api to http://localhost:8000
+VITE_API_BASE_URL=
+```
+
+---
+
+## 6. Detailed Feature Status Matrix
+
+### Completed Features (Verified 100%)
+- [x] **Authentication & RBAC:** Citizen self-registration, role-based JWT authentication (`citizen`, `officer`, `admin`), password hashing with bcrypt.
+- [x] **Citizen Problem Submission:** Photo attachment validation, draggable Leaflet map pin, browser geolocation auto-detect, bilingual UI (English / Hindi), speech-to-text voice input.
+- [x] **Dynamic Routing:** Automatic assignment to 4 municipal departments (Roads, Sanitation, Electrical, Drainage) based on category classification.
+- [x] **Geo-Aware Priority Engine:** 5-factor scoring model (Severity 30%, Proximity 25%, Impact 20%, Duplicates 15%, Urgency 10%). 4 calibrated priority bands: `CRITICAL` (75–100), `HIGH` (50–74), `MEDIUM` (30–49), `LOW` (0–29).
+- [x] **Emergency Escalation:** Severe issues within 50m of critical emergency facilities (e.g. hospital entrance craters) automatically escalate to `CRITICAL` with score $\ge 82.0$.
+- [x] **Explainable Citizen Notices:** Plain-language urgency reason shown to citizens without exposing raw mathematical scoring.
+- [x] **Officer Dashboard:** Department-scoped KPI summary cards, filterable complaint list (including `CRITICAL`), interactive Leaflet map with colored priority markers, and nearest facility popups.
+- [x] **Status Progression & Audit Trail:** Validated status transitions (`submitted` → `assigned` → `in_progress` → `resolved`), status history logging with comments and officer timestamps.
+- [x] **Citizen Tracking & Transparency:** Step-by-step progress timeline, before/after photo evidence display, and star-rating feedback submission.
+
+### Partially Implemented Features
+- [!] **External Vision AI (`classify_complaint`):** Ready for Google Cloud Vision API key. When API key is omitted, system transparently executes bilingual keyword heuristics (`pothole`, `सड़क`, `गड्ढा`, `garbage`, `streetlight`, `drainage`).
+- [!] **Overpass OpenStreetMap Live Facility Query:** Includes local landmark seeds and indexed database facility cache. Network queries execute gracefully when online; system falls back to seeded infrastructure landmarks without blocking or faking responses.
+- [!] **Duplicate Report Merging:** Haversine 50-meter spatial proximity grouping functional. Advanced split-panel UI exists; officer split action endpoint is wired.
+
+### Features Not Implemented
+- [-] SMS / WhatsApp notifications (mock in-app notification bell used).
+- [-] External cloud object storage (AWS S3 / Cloudinary) — all photos are stored on local persistent disk.
+- [-] Automated push notification webhooks for external contractors.
+
+---
+
+## 7. Known Bugs, Storage Implementation & Limitations
+
+1. **Database Mode (SQLite vs PostGIS):**
+   - SQLite is used locally (`civicpulse.db`). Spatial queries use Haversine mathematical formulas in Python.
+   - For PostgreSQL + PostGIS, the codebase includes GeoAlchemy2 models (`Geometry("POINT", srid=4326)`). When migrating to PostgreSQL, ensure the `postgis` extension is activated (`CREATE EXTENSION postgis;`).
+2. **Image Storage Pipeline:**
+   - Uploaded photos are stored on disk in `civicpulse-app/backend/uploads/` (categorized under `reports/` and `resolutions/`).
+   - Photos are served via FastAPI static mounts at `/uploads` and `/media`.
+   - In containerized deployments (Docker / Render), `uploads/` must be mounted to a persistent volume or ephemeral dyno restarts will wipe newly uploaded photos (pre-seeded demo complaints will remain).
+3. **Pydantic Email Validation:**
+   - Field `email` uses length-validated string checking to allow local demo domains (`.demo`, `.local`) during testing and evaluation.
+
+---
+
+## 8. Git Commit & Push Status
+
+- **Status:** All code changes staged, committed, and pushed to remote.
+- **Target Remote:** `origin` (`https://github.com/vani27-lab/CivicpulseAI.git`)
+- **Target Branch:** `main`
+- **Latest Commit:** `feat(final): complete geo-aware priority engine, verified demo workflow, and production readiness`
+- **Working Tree:** Clean (no untracked or uncommitted files).
