@@ -4,7 +4,7 @@ export default {
   "stats.total": "Submitted", "stats.pending": "Pending", "stats.in_progress": "In progress", "stats.resolved": "Resolved",
   "status.submitted": "Submitted", "status.assigned": "Assigned", "status.in_progress": "In progress",
   "status.resolved": "Resolved", "status.rejected": "Rejected",
-  "priority.HIGH": "High priority", "priority.MEDIUM": "Medium priority", "priority.LOW": "Low priority",
+  "priority.CRITICAL": "Critical emergency", "priority.HIGH": "High priority", "priority.MEDIUM": "Medium priority", "priority.LOW": "Low priority",
   "btn.view": "View details", "btn.back": "Back to my complaints", "btn.readAloud": "Read aloud", "btn.stop": "Stop",
   "btn.markAllRead": "Mark all as read", "btn.retry": "Try again",
   "list.title": "My complaints", "list.submittedOn": "Submitted {date}",

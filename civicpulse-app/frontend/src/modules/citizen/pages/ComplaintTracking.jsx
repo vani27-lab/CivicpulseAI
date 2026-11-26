@@ -30,6 +30,12 @@ export default function ComplaintTracking() {
         <h1 className="text-2xl font-bold">{t("tracking.title", { id: "#" + c.id.slice(0, 8) })}</h1>
         <p className="text-slate-600">{c.issue_type} · {fmtDate(c.created_at)}</p>
         <div className="mt-2 flex flex-wrap items-center gap-2"><StatusBadge status={c.status} /><PriorityTag band={c.priority_band} /></div>
+        {c.citizen_urgency_reason && (c.priority_band === 'HIGH' || c.priority_band === 'CRITICAL' || c.is_emergency) && (
+          <div className="mt-3 flex items-start gap-2.5 rounded-md border border-burgundy/30 bg-burgundy-soft p-3 text-sm text-burgundy-dark">
+            <span className="font-bold uppercase tracking-wider text-xs bg-burgundy text-white px-1.5 py-0.5 rounded">Priority Notice</span>
+            <p className="font-medium">{c.citizen_urgency_reason}</p>
+          </div>
+        )}
         <ReadAloudButton text={statusLine} />
       </header>
 

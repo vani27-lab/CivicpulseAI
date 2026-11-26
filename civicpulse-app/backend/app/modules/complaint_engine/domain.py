@@ -111,6 +111,10 @@ class LocationContext:
     kind: Optional[str] = None
     name: Optional[str] = None
     distance_m: Optional[float] = None
+    is_emergency: bool = False
+    nearby_facilities: List[dict] = field(default_factory=list)
+    impact_explanation: Optional[str] = None
+    citizen_urgency_reason: Optional[str] = None
 
 
 @dataclass
@@ -121,3 +125,9 @@ class PriorityResult:
     priority_reason: str
     components: dict
     inputs: dict
+    nearest_facility_name: Optional[str] = None
+    nearest_facility_type: Optional[str] = None
+    nearest_facility_distance_m: Optional[float] = None
+    nearby_facilities: List[dict] = field(default_factory=list)
+    is_emergency: bool = False
+    citizen_urgency_reason: Optional[str] = None

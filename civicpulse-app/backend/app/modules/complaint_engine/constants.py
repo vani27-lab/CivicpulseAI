@@ -5,6 +5,7 @@ DUP_NEW = "new"
 DUP_MERGED = "merged"
 DUP_POSSIBLE = "possible_duplicate"
 
+BAND_CRITICAL = "CRITICAL"
 BAND_HIGH = "HIGH"
 BAND_MEDIUM = "MEDIUM"
 BAND_LOW = "LOW"
@@ -26,5 +27,9 @@ ISSUE_LABELS = {
 # Place kinds understood by the location factor
 KIND_SCHOOL = "school"
 KIND_HOSPITAL = "hospital"
+KIND_FIRE_STATION = "fire_station"
+KIND_POLICE = "police"
+KIND_TRANSIT = "transit"
+KIND_GOVERNMENT = "government"
 KIND_MAIN_ROAD = "main_road"
 KIND_MARKET = "market"

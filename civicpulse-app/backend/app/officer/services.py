@@ -41,7 +41,7 @@ def get_filter_options(db) -> dict:
         "departments": departments,
         "issue_types": issue_types,
         "statuses": [{"value": s.value, "label": STATUS_LABELS[s]} for s in Status],
-        "priorities": ["HIGH", "MEDIUM", "LOW"],
+        "priorities": ["CRITICAL", "HIGH", "MEDIUM", "LOW"],
     }
 
 
@@ -55,6 +55,7 @@ def list_complaints(db, filters: ComplaintFilters, sort_by: str, sort_dir: str, 
         item["id"] = str(item["id"])
         item["department_id"] = _sid(item["department_id"])
         item["report_count"] = int(item["report_count"] or 0)
+        item["is_emergency"] = bool(item.get("is_emergency"))
         items.append(item)
     return {"items": items, "total": int(total), "page": max(1, page), "page_size": max(1, min(page_size, 100))}
 
@@ -100,7 +101,9 @@ def get_complaint_detail(db, complaint_id, *, role_is_admin: bool, settings: Set
             "SELECT c.id, COALESCE(c.issue_type, c.category) AS issue_type, c.status, c.department_id, d.name AS department_name, c.report_count, "
             "c.priority_score, upper(COALESCE(c.priority_band, c.priority_level)) AS priority_band, COALESCE(c.priority_reason, c.priority_explanation) AS priority_reason, "
             "c.created_at, c.updated_at, c.latitude AS latitude, c.longitude AS longitude, "
-            "c.before_photo_path, c.after_photo_path "
+            "c.before_photo_path, c.after_photo_path, "
+            "c.nearest_facility_name, c.nearest_facility_type, c.nearest_facility_distance_m, "
+            "c.nearby_facilities_json, c.citizen_urgency_reason, c.is_emergency "
             "FROM complaints c LEFT JOIN departments d ON d.id = c.department_id WHERE CAST(c.id AS TEXT) = :id"
         ),
         {"id": cid},
@@ -168,6 +171,37 @@ def get_complaint_detail(db, complaint_id, *, role_is_admin: bool, settings: Set
     allowed = allowed_next(current_status, role_is_admin, settings.enable_rejected) if current_status else []
     after_photo = _normalize_media_url(row.get("after_photo_path")) or next((h["after_photo_url"] for h in reversed(history) if h["after_photo_url"]), None)
 
+    import json
+    nearest_name = row.get("nearest_facility_name")
+    nearest_type = row.get("nearest_facility_type")
+    nearest_dist = row.get("nearest_facility_distance_m")
+    nearby_facs = json.loads(row.get("nearby_facilities_json") or "[]") if row.get("nearby_facilities_json") else []
+    is_emergency = bool(row.get("is_emergency"))
+    citizen_urgency = row.get("citizen_urgency_reason")
+
+    if not nearest_name and row.get("latitude") and row.get("longitude"):
+        try:
+            from app.services.geo_facility_service import analyze_geospatial_impact
+            geo_res = analyze_geospatial_impact(
+                lat=float(row["latitude"]),
+                lon=float(row["longitude"]),
+                issue_type=row["issue_type"] or "other",
+                severity=1,
+                db=db,
+            )
+            if geo_res.nearest_facility:
+                nearest_name = geo_res.nearest_facility.name
+                nearest_type = geo_res.nearest_facility.facility_type
+                nearest_dist = geo_res.nearest_facility.distance_m
+                nearby_facs = [
+                    {"name": f.name, "type": f.facility_type, "distance_m": f.distance_m, "lat": f.latitude, "lon": f.longitude}
+                    for f in geo_res.nearby_facilities
+                ]
+                is_emergency = geo_res.is_emergency
+                citizen_urgency = geo_res.citizen_urgency_reason
+        except Exception:
+            pass
+
     return {
         "id": str(row["id"]),
         "issue_type": row["issue_type"],
@@ -184,7 +218,21 @@ def get_complaint_detail(db, complaint_id, *, role_is_admin: bool, settings: Set
             "score": row["priority_score"],
             "band": row["priority_band"],
             "reasons": parse_reasons(row["priority_reason"]),
+            "nearest_facility_name": nearest_name,
+            "nearest_facility_type": nearest_type,
+            "nearest_facility_distance_m": nearest_dist,
+            "is_emergency": is_emergency,
+            "citizen_urgency_reason": citizen_urgency,
+            "nearby_facilities": nearby_facs,
         },
+        "nearby_facilities": nearby_facs,
+        "nearest_facility": {
+            "name": nearest_name,
+            "type": nearest_type,
+            "distance_m": nearest_dist,
+        } if nearest_name else None,
+        "is_emergency": is_emergency,
+        "citizen_urgency_reason": citizen_urgency,
         "ai_classification": {
             "original_issue_type": corrections[0]["old_issue_type"] if corrections else row["issue_type"],
             "current_issue_type": row["issue_type"],

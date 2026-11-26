@@ -27,6 +27,7 @@ class ComplaintStatus(str, enum.Enum):
 
 
 class PriorityLevel(str, enum.Enum):
+    CRITICAL = "critical"
     HIGH = "high"
     MEDIUM = "medium"
     LOW = "low"

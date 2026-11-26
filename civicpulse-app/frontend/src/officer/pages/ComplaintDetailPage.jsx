@@ -136,9 +136,36 @@ export default function ComplaintDetailPage() {
           <Panel title="Priority">
             <div className="space-y-3 p-4">
               <PriorityBadge band={c.priority.band} score={c.priority.score} />
+              {(c.priority.is_emergency || c.is_emergency) && (
+                <div className="rounded-md border border-red-500 bg-red-100 p-2.5 text-xs font-bold text-red-900">
+                  EMERGENCY ESCALATION ACTIVE: Immediate public safety or emergency facility access threat.
+                </div>
+              )}
+              {c.priority.nearest_facility_name && (
+                <div className="rounded-md bg-paper p-3 text-xs border border-line">
+                  <span className="font-semibold text-muted uppercase tracking-wider block">Nearest Important Facility</span>
+                  <p className="mt-1 font-medium text-ink text-sm">{c.priority.nearest_facility_name} ({c.priority.nearest_facility_type})</p>
+                  <p className="text-muted">{Math.round(c.priority.nearest_facility_distance_m)} metres away</p>
+                </div>
+              )}
               <PriorityExplanation reasons={c.priority.reasons} />
             </div>
           </Panel>
+          {((c.nearby_facilities && c.nearby_facilities.length > 0) || (c.priority?.nearby_facilities && c.priority.nearby_facilities.length > 0)) && (
+            <Panel title="Nearby Critical Facilities">
+              <div className="p-4 space-y-2 text-xs">
+                {(c.nearby_facilities || c.priority?.nearby_facilities || []).slice(0, 5).map((f, i) => (
+                  <div key={i} className="flex items-center justify-between border-b border-line pb-2">
+                    <div>
+                      <span className="font-medium text-ink">{f.name}</span>
+                      <span className="ml-2 rounded bg-paper px-1.5 py-0.5 text-[10px] text-muted uppercase font-mono">{f.type}</span>
+                    </div>
+                    <span className="font-mono text-muted">{Math.round(f.distance_m)} m</span>
+                  </div>
+                ))}
+              </div>
+            </Panel>
+          )}
           <Panel title="AI classification">
             <ClassificationPanel complaintId={c.id} ai={c.ai_classification} corrections={c.corrections}
                                  issueTypes={options.data?.issue_types ?? []} onCorrected={detail.reload} />
@@ -147,7 +174,7 @@ export default function ComplaintDetailPage() {
             <p className="px-4 pt-3 text-sm text-muted">
               {formatCoords(c.latitude, c.longitude)}; GPS accuracy {c.gps_accuracy != null ? `${Math.round(c.gps_accuracy)} m` : '-'}
             </p>
-            <LocationMap latitude={c.latitude} longitude={c.longitude} band={c.priority.band} />
+            <LocationMap latitude={c.latitude} longitude={c.longitude} band={c.priority.band} nearbyFacilities={c.nearby_facilities || c.priority?.nearby_facilities || []} />
           </Panel>
           <Panel title="Merged reports"><SplitPanel complaintId={c.id} reports={c.reports} onSplit={detail.reload} /></Panel>
         </div>

@@ -31,6 +31,10 @@ class ComplaintRow(BaseModel):
     created_at: datetime
     latitude: float | None
     longitude: float | None
+    nearest_facility_name: str | None = None
+    nearest_facility_type: str | None = None
+    nearest_facility_distance_m: float | None = None
+    is_emergency: bool = False
 
 
 class ComplaintListOut(BaseModel):
@@ -78,6 +82,12 @@ class PriorityOut(BaseModel):
     score: float | None
     band: str | None
     reasons: list[str]
+    nearest_facility_name: str | None = None
+    nearest_facility_type: str | None = None
+    nearest_facility_distance_m: float | None = None
+    is_emergency: bool = False
+    citizen_urgency_reason: str | None = None
+    nearby_facilities: list[dict] = Field(default_factory=list)
 
 
 class AIClassificationOut(BaseModel):
@@ -110,6 +120,10 @@ class ComplaintDetailOut(BaseModel):
     can_override: bool
     before_photo_url: str | None
     after_photo_url: str | None
+    nearby_facilities: list[dict] = Field(default_factory=list)
+    nearest_facility: dict | None = None
+    is_emergency: bool = False
+    citizen_urgency_reason: str | None = None
 
 
 class StatusUpdateOut(BaseModel):

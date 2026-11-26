@@ -29,7 +29,7 @@ export function ComplaintFilters({ value, options, onChange }) {
         <label htmlFor="f-priority" className="label">Priority</label>
         <select id="f-priority" className="field" value={value.priority} onChange={set('priority')}>
           <option value="">All priorities</option>
-          {options.priorities.map((p) => <option key={p} value={p}>{p}</option>)}
+          {(options.priorities?.length ? options.priorities : ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']).map((p) => <option key={p} value={p}>{p}</option>)}
         </select>
       </div>
       <div>

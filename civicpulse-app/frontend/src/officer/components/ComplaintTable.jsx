@@ -44,10 +44,20 @@ export function ComplaintTable({ items, sortBy, sortDir, onSort }) {
                 <span title={c.id}>{shortId(c.id)}</span>
               </td>
               <td className="px-3 py-2.5">{c.issue_type || '-'}</td>
-              <td className="px-3 py-2.5 text-muted">{formatCoords(c.latitude, c.longitude)}</td>
+              <td className="px-3 py-2.5 text-muted">
+                <div>{formatCoords(c.latitude, c.longitude)}</div>
+                {c.nearest_facility_name && (
+                  <div className="text-[11px] text-muted-dark truncate max-w-[180px]" title={`${c.nearest_facility_name} (${Math.round(c.nearest_facility_distance_m)}m)`}>
+                    📍 {c.nearest_facility_name} ({Math.round(c.nearest_facility_distance_m)}m)
+                  </div>
+                )}
+              </td>
               <td className="px-3 py-2.5">{c.department_name || 'Unassigned'}</td>
               <td className="px-3 py-2.5 tabular-nums">{c.report_count}</td>
-              <td className="px-3 py-2.5"><PriorityBadge band={c.priority_band} score={c.priority_score} /></td>
+              <td className="px-3 py-2.5">
+                <PriorityBadge band={c.priority_band} score={c.priority_score} />
+                {c.is_emergency && <span className="ml-1.5 text-[10px] bg-red-600 text-white font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">Emergency</span>}
+              </td>
               <td className="px-3 py-2.5"><StatusBadge status={c.status} /></td>
               <td className="px-3 py-2.5 whitespace-nowrap">{formatDate(c.created_at)}</td>
               <td className="px-3 py-2.5">

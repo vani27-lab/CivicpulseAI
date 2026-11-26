@@ -10,7 +10,7 @@ from .errors import ValidationFailed
 from .workflow import Status, normalize_status
 
 NORM_STATUS = "lower(replace(replace(c.status, ' ', '_'), '-', '_'))"
-BAND_RANK = "CASE upper(c.priority_level) WHEN 'HIGH' THEN 0 WHEN 'MEDIUM' THEN 1 WHEN 'LOW' THEN 2 ELSE 3 END"
+BAND_RANK = "CASE upper(COALESCE(c.priority_band, c.priority_level)) WHEN 'CRITICAL' THEN 0 WHEN 'HIGH' THEN 1 WHEN 'MEDIUM' THEN 2 WHEN 'LOW' THEN 3 ELSE 4 END"
 
 SORT_COLUMNS = {
     "priority": None,  # special-cased: band rank, then score
@@ -19,18 +19,19 @@ SORT_COLUMNS = {
     "updated_at": "c.updated_at",
     "report_count": "c.report_count",
     "status": NORM_STATUS,
-    "issue_type": "lower(c.category)",
+    "issue_type": "lower(COALESCE(c.issue_type, c.category))",
     "department": "lower(d.name)",
 }
 
 MAX_PAGE_SIZE = 100
-PRIORITY_BANDS = {"HIGH", "MEDIUM", "LOW"}
+PRIORITY_BANDS = {"CRITICAL", "HIGH", "MEDIUM", "LOW"}
 
 SELECT_COLUMNS = """
-    c.id, c.category AS issue_type, {norm} AS status, c.department_id, d.name AS department_name,
-    c.report_count, c.priority_score, upper(c.priority_level) AS priority_band,
+    c.id, COALESCE(c.issue_type, c.category) AS issue_type, {norm} AS status, c.department_id, d.name AS department_name,
+    c.report_count, c.priority_score, upper(COALESCE(c.priority_band, c.priority_level)) AS priority_band,
     c.created_at, c.updated_at,
-    c.latitude AS latitude, c.longitude AS longitude
+    c.latitude AS latitude, c.longitude AS longitude,
+    c.nearest_facility_name, c.nearest_facility_type, c.nearest_facility_distance_m, c.is_emergency
 """.format(norm=NORM_STATUS)
 
 FROM_CLAUSE = "FROM complaints c LEFT JOIN departments d ON d.id = c.department_id"
@@ -135,7 +136,7 @@ SELECT
   count(CASE WHEN {NORM_STATUS} IN ('submitted', 'assigned') THEN 1 END) AS pending,
   count(CASE WHEN {NORM_STATUS} = 'in_progress' THEN 1 END) AS in_progress,
   count(CASE WHEN {NORM_STATUS} = 'resolved' THEN 1 END) AS resolved,
-  count(CASE WHEN upper(c.priority_level) = 'HIGH' AND {NORM_STATUS} NOT IN ('resolved', 'rejected') THEN 1 END) AS high_priority
+  count(CASE WHEN upper(COALESCE(c.priority_band, c.priority_level)) IN ('CRITICAL', 'HIGH') AND {NORM_STATUS} NOT IN ('resolved', 'rejected') THEN 1 END) AS high_priority
 FROM complaints c
 """
 

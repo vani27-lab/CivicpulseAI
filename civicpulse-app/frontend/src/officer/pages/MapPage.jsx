@@ -39,7 +39,7 @@ export default function MapPage() {
             <label htmlFor="m-pri" className="label">Priority</label>
             <select id="m-pri" className="field" value={filters.priority} onChange={set('priority')}>
               <option value="">All priorities</option>
-              {['HIGH', 'MEDIUM', 'LOW'].map((p) => <option key={p} value={p}>{p}</option>)}
+              {['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].map((p) => <option key={p} value={p}>{p}</option>)}
             </select>
           </div>
         </div>

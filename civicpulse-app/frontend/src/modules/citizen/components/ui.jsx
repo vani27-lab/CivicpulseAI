@@ -2,7 +2,7 @@ import { useI18n, LANGUAGES } from "../i18n/index.jsx";
 
 const TONE = { submitted: "bg-slate-100 text-slate-800", assigned: "bg-sky-100 text-sky-900",
   in_progress: "bg-amber-100 text-amber-900", resolved: "bg-emerald-100 text-emerald-900", rejected: "bg-rose-100 text-rose-900" };
-const BAND = { HIGH: "border-red-600 text-red-800", MEDIUM: "border-orange-600 text-orange-800", LOW: "border-green-700 text-green-800" };
+const BAND = { CRITICAL: "border-red-700 bg-red-100 text-red-900 font-bold", HIGH: "border-red-600 text-red-800", MEDIUM: "border-orange-600 text-orange-800", LOW: "border-green-700 text-green-800" };
 
 export const StatusBadge = ({ status }) => { const { t } = useI18n();
   return <span className={`inline-block rounded px-2 py-0.5 text-sm font-medium ${TONE[status] || TONE.submitted}`}>{t(`status.${status}`)}</span>; };

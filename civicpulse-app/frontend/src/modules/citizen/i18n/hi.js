@@ -4,7 +4,7 @@ export default {
   "stats.total": "दर्ज की गई", "stats.pending": "लंबित", "stats.in_progress": "प्रगति पर", "stats.resolved": "हल हुई",
   "status.submitted": "दर्ज की गई", "status.assigned": "सौंपी गई", "status.in_progress": "प्रगति पर",
   "status.resolved": "हल हो गई", "status.rejected": "अस्वीकृत",
-  "priority.HIGH": "उच्च प्राथमिकता", "priority.MEDIUM": "मध्यम प्राथमिकता", "priority.LOW": "कम प्राथमिकता",
+  "priority.CRITICAL": "अत्यावश्यक प्राथमिकता", "priority.HIGH": "उच्च प्राथमिकता", "priority.MEDIUM": "मध्यम प्राथमिकता", "priority.LOW": "कम प्राथमिकता",
   "btn.view": "विवरण देखें", "btn.back": "मेरी शिकायतों पर वापस जाएँ", "btn.readAloud": "सुनें", "btn.stop": "रोकें",
   "btn.markAllRead": "सभी को पढ़ा हुआ करें", "btn.retry": "फिर कोशिश करें",
   "list.title": "मेरी शिकायतें", "list.submittedOn": "दर्ज की गई: {date}",

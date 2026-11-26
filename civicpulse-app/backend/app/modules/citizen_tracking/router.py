@@ -72,7 +72,8 @@ def detail(cid: str, db=Depends(get_db), user=Depends(get_current_user)):
     c = db.execute(text(
         "SELECT id, COALESCE(issue_type, category) AS issue_type, status, "
         "COALESCE(priority_band, upper(priority_level)) AS priority_band, created_at, updated_at, "
-        "before_photo_path, after_photo_path "
+        "before_photo_path, after_photo_path, "
+        "citizen_urgency_reason, is_emergency, nearest_facility_name, nearest_facility_distance_m "
         "FROM complaints WHERE CAST(id AS TEXT)=:c"
     ), {"c": str(cid)}).mappings().first()
     mine_r = db.execute(text("""
@@ -86,6 +87,11 @@ def detail(cid: str, db=Depends(get_db), user=Depends(get_current_user)):
     hist = _history(db, cid)
     after = _normalize_media_url(c.get("after_photo_path")) or next((h["after_photo_url"] for h in reversed(hist) if h.get("after_photo_url")), None)
     before = _normalize_media_url(c.get("before_photo_path") or (mine_r["image_url"] if mine_r else None))
+    citizen_urgency = c.get("citizen_urgency_reason")
+    if not citizen_urgency and c.get("nearest_facility_name"):
+        dist_str = f"{int(c['nearest_facility_distance_m'])}m" if c.get("nearest_facility_distance_m") else "nearby"
+        citizen_urgency = f"Marked urgent: Located {dist_str} from {c['nearest_facility_name']}"
+
     return {
         "id": str(c["id"]), "issue_type": c["issue_type"], "status": norm(c["status"]),
         "priority_band": c["priority_band"], "created_at": iso(c["created_at"]), "updated_at": iso(c["updated_at"]),
@@ -95,6 +101,10 @@ def detail(cid: str, db=Depends(get_db), user=Depends(get_current_user)):
         "translated_description": mine_r["translated_description"] if mine_r else "",
         "latitude": mine_r["latitude"] if mine_r else None,
         "longitude": mine_r["longitude"] if mine_r else None,
+        "citizen_urgency_reason": citizen_urgency,
+        "is_emergency": bool(c.get("is_emergency")),
+        "nearest_facility_name": c.get("nearest_facility_name"),
+        "nearest_facility_distance_m": c.get("nearest_facility_distance_m"),
     }
 
 @router.get("/complaints/{cid}/history")

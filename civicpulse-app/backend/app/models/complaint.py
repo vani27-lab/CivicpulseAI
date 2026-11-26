@@ -73,6 +73,12 @@ class Complaint(Base):
         enum_type(PriorityLevel), default=PriorityLevel.LOW, server_default=PriorityLevel.LOW.value
     )
     priority_explanation: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    nearest_facility_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    nearest_facility_type: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    nearest_facility_distance_m: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    nearby_facilities_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    citizen_urgency_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    is_emergency: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
     report_count: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
 
     # --- Progress ---

@@ -6,6 +6,7 @@ Integrated with:
 """
 from pathlib import Path
 from typing import Optional
+import json
 import math
 
 from sqlalchemy.orm import Session
@@ -135,28 +136,64 @@ def create_report(
                 candidate_complaint = comp
                 break
 
-    # 5. Priority Calculation (Module 4)
+    # 5. Geospatial Intelligence & Nearby Facility Detection
+    from app.modules.complaint_engine.domain import LocationContext
+    loc_ctx = LocationContext(factor=0.0, kind=None)
+    try:
+        from app.services.geo_facility_service import analyze_geospatial_impact
+        geo_res = analyze_geospatial_impact(
+            lat=latitude,
+            lon=longitude,
+            issue_type=cat.value,
+            severity=max(ai_res.severity or 1, (candidate_complaint.severity or 1) if candidate_complaint else 1),
+            db=db,
+        )
+        nearest_fac = geo_res.nearest_facility
+        loc_ctx = LocationContext(
+            factor=geo_res.location_factor,
+            kind=nearest_fac.facility_type if nearest_fac else None,
+            name=nearest_fac.name if nearest_fac else None,
+            distance_m=nearest_fac.distance_m if nearest_fac else None,
+            is_emergency=geo_res.is_emergency,
+            nearby_facilities=[
+                {"name": f.name, "type": f.facility_type, "distance_m": f.distance_m, "lat": f.latitude, "lon": f.longitude}
+                for f in geo_res.nearby_facilities
+            ],
+            impact_explanation=geo_res.impact_explanation,
+            citizen_urgency_reason=geo_res.citizen_urgency_reason,
+        )
+    except Exception as e:
+        logger.warning("Geospatial analysis fallback: %s", e)
+
+    # 6. Priority Calculation (Module 4)
     rep_count = (candidate_complaint.report_count + 1) if candidate_complaint else 1
     sev_level = max(ai_res.severity or 1, (candidate_complaint.severity or 1) if candidate_complaint else 1)
     try:
         from app.modules.complaint_engine.priority import calculate_priority
-        from app.modules.complaint_engine.domain import LocationContext
         p_res = calculate_priority(
             severity=sev_level,
             reports=rep_count,
             days_pending=0,
-            location=LocationContext(factor=0.0, kind=None),
+            location=loc_ctx,
             issue_type=cat.value,
         )
         p_score = p_res.score
         p_band_str = p_res.band.lower()
         p_expl = p_res.priority_reason
-    except Exception:
+    except Exception as e:
+        logger.warning("Priority calculation fallback: %s", e)
         p_score = 30.0 + (rep_count * 10.0)
         p_band_str = "medium" if p_score >= 40 else "low"
         p_expl = f"Calculated priority score {p_score}"
 
-    priority_enum = PriorityLevel.HIGH if p_band_str == "high" else (PriorityLevel.MEDIUM if p_band_str == "medium" else PriorityLevel.LOW)
+    if p_band_str == "critical":
+        priority_enum = PriorityLevel.CRITICAL
+    elif p_band_str == "high":
+        priority_enum = PriorityLevel.HIGH
+    elif p_band_str == "medium":
+        priority_enum = PriorityLevel.MEDIUM
+    else:
+        priority_enum = PriorityLevel.LOW
 
     if candidate_complaint:
         # Merge into existing complaint
@@ -165,6 +202,15 @@ def create_report(
         complaint.priority_score = p_score
         complaint.priority_level = priority_enum
         complaint.priority_explanation = p_expl
+        complaint.issue_type = cat.value
+        complaint.priority_band = p_band_str.upper()
+        complaint.priority_reason = p_expl
+        complaint.nearest_facility_name = loc_ctx.name
+        complaint.nearest_facility_type = loc_ctx.kind
+        complaint.nearest_facility_distance_m = loc_ctx.distance_m
+        complaint.nearby_facilities_json = json.dumps(loc_ctx.nearby_facilities) if getattr(loc_ctx, "nearby_facilities", None) else None
+        complaint.citizen_urgency_reason = loc_ctx.citizen_urgency_reason
+        complaint.is_emergency = loc_ctx.is_emergency
         duplicate_status = DuplicateStatus.MERGED
     else:
         # Create new complaint
@@ -191,6 +237,12 @@ def create_report(
         complaint.issue_type = cat.value
         complaint.priority_band = p_band_str.upper()
         complaint.priority_reason = p_expl
+        complaint.nearest_facility_name = loc_ctx.name
+        complaint.nearest_facility_type = loc_ctx.kind
+        complaint.nearest_facility_distance_m = loc_ctx.distance_m
+        complaint.nearby_facilities_json = json.dumps(loc_ctx.nearby_facilities) if getattr(loc_ctx, "nearby_facilities", None) else None
+        complaint.citizen_urgency_reason = loc_ctx.citizen_urgency_reason
+        complaint.is_emergency = loc_ctx.is_emergency
         db.add(complaint)
         db.flush()
         duplicate_status = DuplicateStatus.NONE

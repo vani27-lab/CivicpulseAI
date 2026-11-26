@@ -26,7 +26,7 @@ class RegisterRequest(BaseModel):
     """Public sign-up. Always creates a CITIZEN account."""
 
     full_name: str = Field(min_length=2, max_length=120)
-    email: EmailStr
+    email: str = Field(min_length=3, max_length=255)
     password: str = Field(min_length=8, max_length=72)
     preferred_language: Language = "en"
 
@@ -40,7 +40,7 @@ class UserCreate(BaseModel):
     """Used by an admin to create officer or admin accounts."""
 
     full_name: str = Field(min_length=2, max_length=120)
-    email: EmailStr
+    email: str = Field(min_length=3, max_length=255)
     password: str = Field(min_length=8, max_length=72)
     role: UserRole
     department_id: Optional[int] = None
