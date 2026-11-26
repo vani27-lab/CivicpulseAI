@@ -1,4 +1,4 @@
-const BASE = import.meta.env.VITE_API_URL || "";
+const BASE = (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
 const TOKEN_KEY = import.meta.env.VITE_TOKEN_KEY || "civicpulse_token";
 export class ApiError extends Error { constructor(status, msg) { super(msg); this.status = status; } }
 

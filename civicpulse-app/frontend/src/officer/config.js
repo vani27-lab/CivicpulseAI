@@ -1,4 +1,5 @@
 const env = import.meta.env
+const rawApiBase = (env.VITE_API_BASE_URL || env.VITE_API_URL || '').replace(/\/$/, '')
 
 const parseCenter = (raw) => {
   const [lat, lng] = String(raw || '').split(',').map(Number)
@@ -6,8 +7,8 @@ const parseCenter = (raw) => {
 }
 
 export const config = {
-  apiBase: (env.VITE_API_BASE_URL ?? '').replace(/\/$/, ''),
-  mediaBase: (env.VITE_MEDIA_BASE_URL ?? env.VITE_API_BASE_URL ?? '').replace(/\/$/, ''),
+  apiBase: rawApiBase,
+  mediaBase: (env.VITE_MEDIA_BASE_URL || rawApiBase).replace(/\/$/, ''),
   tokenKey: env.VITE_AUTH_TOKEN_KEY || 'civicpulse_token',
   loginPath: env.VITE_AUTH_LOGIN_PATH || '/api/auth/login',
   loginFormat: env.VITE_AUTH_LOGIN_FORMAT || 'json',

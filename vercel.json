@@ -1,0 +1,8 @@
+{
+  "framework": "vite",
+  "buildCommand": "cd civicpulse-app/frontend && npm install && npm run build",
+  "outputDirectory": "civicpulse-app/frontend/dist",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

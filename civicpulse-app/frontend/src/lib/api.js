@@ -1,7 +1,9 @@
 // All calls to the backend go through this file.
 // In development, Vite forwards "/api/..." to the FastAPI server (see vite.config.js).
+// In production, requests use VITE_API_BASE_URL (e.g. Render backend).
 
-const API_BASE = "/api";
+const RAW_BASE = (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
+const API_BASE = RAW_BASE ? `${RAW_BASE}/api` : "/api";
 const TOKEN_KEY = "civicpulse_token";
 
 export const tokenStore = {
