@@ -1,0 +1,4 @@
+{ "_note": "Merge into Module 1 package.json if not already present",
+  "dependencies": { "react-router-dom": "^6.26.0" },
+  "devDependencies": { "vitest": "^2.0.0" },
+  "scripts": { "test:citizen": "vitest run src/modules/citizen" } }

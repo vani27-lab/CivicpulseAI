@@ -1,0 +1,4 @@
+# Heavy: only needed for real CLIP embeddings
+sentence-transformers>=2.7
+pillow>=10.0
+torch

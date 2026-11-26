@@ -1,0 +1,4 @@
+{
+  "_comment": "Points of interest for the location factor. kind: school|hospital|main_road|market. Optional radius_m per entry. Empty => location_factor is 0 everywhere.",
+  "places": []
+}
