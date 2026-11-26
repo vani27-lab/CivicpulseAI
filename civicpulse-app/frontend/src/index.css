@@ -1,35 +1,74 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   html {
-    font-size: 106.25%; /* 17px: slightly larger than normal, easier to read */
+    font-size: 16px;
+    background-color: #F4F0E9;
   }
   body {
-    @apply bg-page text-ink antialiased;
+    @apply bg-page text-ink antialiased font-sans selection:bg-burgundy-soft selection:text-burgundy;
     line-height: 1.6;
   }
   :focus-visible {
-    outline: 3px solid #2f6b8f;
+    outline: 2px solid #782F32;
     outline-offset: 2px;
+  }
+  h1, h2, h3, .font-editorial {
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }
 
 @layer components {
+  /* Buttons */
   .btn {
-    @apply inline-flex min-h-[3rem] items-center justify-center rounded-lg px-5 font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60;
+    @apply inline-flex min-h-[2.5rem] items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold tracking-wide transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.98];
   }
   .btn-primary {
-    @apply bg-accent text-white hover:bg-accent-dark;
+    @apply bg-burgundy text-white shadow-sm hover:bg-burgundy-dark hover:shadow;
   }
   .btn-secondary {
-    @apply border border-line bg-white text-ink hover:bg-page;
+    @apply border border-line bg-white text-ink hover:bg-[#F9F7F3] hover:border-[#C9C2B5];
   }
+  .btn-outline {
+    @apply border-2 border-burgundy text-burgundy bg-transparent hover:bg-burgundy hover:text-white;
+  }
+  .btn-danger {
+    @apply bg-high-text text-white hover:bg-high-rail shadow-sm;
+  }
+
+  /* Form inputs & fields */
   .input {
-    @apply block min-h-[3rem] w-full rounded-lg border border-line bg-white px-4 text-ink placeholder:text-muted;
+    @apply block min-h-[2.5rem] w-full rounded-md border border-line bg-white px-3.5 py-2 text-sm text-ink transition-colors placeholder:text-muted focus:border-burgundy focus:ring-1 focus:ring-burgundy;
   }
+  .field {
+    @apply w-full rounded-md border border-line bg-white px-3.5 py-2 text-sm text-ink placeholder:text-muted focus:border-burgundy focus:ring-1 focus:ring-burgundy transition-colors;
+  }
+  .label {
+    @apply mb-1.5 block text-xs font-bold uppercase tracking-wider text-muted;
+  }
+
+  /* Cards & Panels */
   .card {
-    @apply rounded-xl border border-line bg-white p-6;
+    @apply rounded-lg border border-line bg-white p-6 shadow-editorial transition-shadow hover:shadow-card;
   }
+  .panel {
+    @apply rounded-lg border border-line bg-white shadow-editorial overflow-hidden;
+  }
+  .panel-title {
+    @apply border-b border-line bg-[#FAF8F5] px-4 py-3 text-sm font-bold uppercase tracking-wider text-ink;
+  }
+
+  /* Editorial elements */
+  .editorial-badge {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold tracking-wider uppercase;
+  }
+}
+
+.leaflet-container {
+  font-family: inherit;
+  z-index: 10;
 }

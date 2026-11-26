@@ -89,11 +89,19 @@ export default function ReportProblem() {
 
   if (result) {
     return (
-      <div className="card text-center" role="status">
-        <h1 className="mb-2 text-3xl font-semibold">{t("report.doneTitle")}</h1>
-        <p className="mb-6 text-muted">{t("report.doneText", { id: result.complaint_id })}</p>
-        <div className="flex flex-col justify-center gap-3 sm:flex-row">
-          <button type="button" className="btn btn-primary" onClick={startAnother}>
+      <div className="card text-center py-10" role="status">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-good/15 text-good">
+          <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <h1 className="mb-2 font-serif text-3xl font-bold text-ink">{t("report.doneTitle")}</h1>
+        <p className="mb-6 text-muted max-w-md mx-auto">{t("report.doneText", { id: result.complaint_id })}</p>
+        <div className="flex flex-col justify-center items-center gap-3 sm:flex-row">
+          <Link to={`/citizen/complaints/${result.complaint_id}`} className="btn btn-primary">
+            Track Complaint Live &rarr;
+          </Link>
+          <button type="button" className="btn btn-secondary" onClick={startAnother}>
             {t("report.doneAnother")}
           </button>
           <Link to="/" className="btn btn-secondary">
