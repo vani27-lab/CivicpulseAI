@@ -10,8 +10,12 @@
     background-color: #F4F0E9;
   }
   body {
-    @apply bg-page text-ink antialiased font-sans selection:bg-burgundy-soft selection:text-burgundy;
+    @apply bg-page text-ink antialiased font-sans;
     line-height: 1.6;
+  }
+  ::selection {
+    background-color: #F6ECED;
+    color: #782F32;
   }
   :focus-visible {
     outline: 2px solid #782F32;
