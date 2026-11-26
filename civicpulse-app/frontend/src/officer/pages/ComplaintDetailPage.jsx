@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { officerApi } from '../api/officerApi'
 import { ClassificationPanel } from '../components/ClassificationPanel'
@@ -16,6 +17,30 @@ import { formatConfidence, formatCoords, formatDateTime, formatSeverity, shortId
 const Panel = ({ title, children }) => (
   <section className="panel"><h2 className="panel-title">{title}</h2>{children}</section>
 )
+
+function ImageWithFallback({ src, alt, emptyText, caption }) {
+  const [failed, setFailed] = useState(false)
+  const url = mediaUrl(src)
+
+  return (
+    <figure className="min-w-0">
+      {url && !failed ? (
+        <img
+          src={url}
+          alt={alt}
+          className="w-full max-h-80 rounded-md border border-line object-cover"
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <div className="rounded-md border border-dashed border-line p-6 text-center text-sm text-muted bg-[#EDE8E0]">
+          <p className="font-medium text-ink">{failed ? 'Image file not found on server' : emptyText}</p>
+          {failed && <p className="mt-1 text-xs text-muted">The photo file could not be retrieved from storage.</p>}
+        </div>
+      )}
+      <figcaption className="mt-1.5 text-xs font-mono uppercase tracking-wider text-muted">{caption}</figcaption>
+    </figure>
+  )
+}
 
 export default function ComplaintDetailPage() {
   const { id } = useParams()
@@ -50,18 +75,18 @@ export default function ComplaintDetailPage() {
         <div className="space-y-4 lg:col-span-2">
           <Panel title="Evidence">
             <div className="grid gap-4 p-4 sm:grid-cols-2">
-              <figure>
-                {c.before_photo_url
-                  ? <img src={mediaUrl(c.before_photo_url)} alt="Before: photo submitted by the citizen" className="w-full rounded-md border border-line" />
-                  : <p className="rounded-md border border-dashed border-line p-6 text-sm text-muted">No photo was submitted.</p>}
-                <figcaption className="mt-1 text-sm text-muted">Before (citizen photo)</figcaption>
-              </figure>
-              <figure>
-                {c.after_photo_url
-                  ? <img src={mediaUrl(c.after_photo_url)} alt="After: photo uploaded by the officer" className="w-full rounded-md border border-line" />
-                  : <p className="rounded-md border border-dashed border-line p-6 text-sm text-muted">No after-photo yet. It is required to resolve this complaint.</p>}
-                <figcaption className="mt-1 text-sm text-muted">After (officer photo)</figcaption>
-              </figure>
+              <ImageWithFallback
+                src={c.before_photo_url}
+                alt="Before: photo submitted by the citizen"
+                emptyText="No photo was submitted."
+                caption="Before (citizen photo)"
+              />
+              <ImageWithFallback
+                src={c.after_photo_url}
+                alt="After: photo uploaded by the officer"
+                emptyText="No after-photo yet. It is required to resolve this complaint."
+                caption="After (officer photo)"
+              />
             </div>
           </Panel>
 

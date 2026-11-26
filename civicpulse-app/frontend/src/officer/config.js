@@ -34,5 +34,9 @@ export const config = {
 export const mediaUrl = (path) => {
   if (!path) return null
   if (/^(https?:|data:|blob:)/.test(path)) return path
-  return `${config.mediaBase}${path.startsWith('/') ? '' : '/'}${path}`
+  let clean = path.startsWith('/') ? path : `/${path}`
+  if (!clean.startsWith('/uploads/') && !clean.startsWith('/media/')) {
+    clean = `/uploads${clean}`
+  }
+  return `${config.mediaBase}${clean}`
 }

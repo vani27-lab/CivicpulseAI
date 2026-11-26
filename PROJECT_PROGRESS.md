@@ -32,6 +32,8 @@ The production-ready integrated application is located in `civicpulse-app/` with
 | **Priority & Routing** | `report_service.py` had placeholder `TODO Module 4` | Integrated `calculate_priority()` and department routing (Roads, Sanitation, Electrical, Drainage) into `report_service.py`. |
 | **Frontend Routing & Proxies** | Separate React shells in modules 2, 5, and 6 | Unified all routes in `civicpulse-app/frontend/src/App.jsx` (`/`, `/report`, `/officer/*`, `/citizen/*`). Updated `vite.config.js` to proxy `/api`, `/officer`, `/complaints`, `/stats`, `/notifications`, `/uploads`, and `/media`. |
 | **PostCSS @apply selection Error** | `selection:bg-burgundy-soft` invalid in Tailwind `@apply` | Replaced `@apply` selection declaration in `index.css` with standard CSS `::selection { background-color: #F6ECED; color: #782F32; }`. Verified `npm run build` succeeds in 3.98s and app loads at `http://localhost:5173`. |
+| **Image Upload & Serving Pipeline** | Before & after images broke on Officer Detail & Citizen Tracking pages (`/officer/complaints/14`). | 1) Anchored `upload_dir` to absolute path `civicpulse-app/backend/uploads`. 2) Added URL normalization (`/uploads/...` and `/media/...`) in backend `services.py` and `router.py`, and in frontend `config.js` and `api.js`. 3) Prevented citizen submission photo (`photo_path`) from leaking into `after_photo_url` when unresolved. 4) Added resilient fallback UI in `ComplaintDetailPage.jsx` and `BeforeAfter.jsx`. |
+| **Complaint #14 Misclassification Root Cause** | Complaint #14 had `unclassified`, no department, and low priority despite pothole description. | **Classification & Routing Failure identified:** `classify_complaint()` caught Vision API errors internally and returned unclassified rather than raising, bypassing the `except Exception:` heuristic fallback. Fixed fallback condition to check `unclassified`/`0.0 confidence`, adding multilingual keywords (pothole, सड़क, गड्ढा, garbage, streetlight, drainage). Corrected Complaint #14 to `pothole`, routed to `Roads` department, and recalculated explainable priority score (35.69, LOW). |
 
 ---
 
@@ -47,6 +49,9 @@ The production-ready integrated application is located in `civicpulse-app/` with
 - [x] Resolution evidence verification requiring after-photos for resolution.
 - [x] Citizen tracking portal with step-by-step history timeline and in-app notifications.
 - [x] Modern Industrial Editorial styling (`#F4F0E9` background, `#782F32` burgundy accent, clean editorial typography).
+- [x] End-to-end image upload and static serving pipeline (`/uploads` and `/media`) with absolute disk path persistence.
+- [x] Resilient image fallback UI handling missing/corrupted photo files without broken browser icons.
+- [x] Before-and-after resolution evidence verification on both Officer Detail page and Citizen Tracking page.
 
 ---
 

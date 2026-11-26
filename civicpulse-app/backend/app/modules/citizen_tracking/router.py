@@ -14,13 +14,36 @@ def _require_owned(db, cid, uid):
     if not ok:  # 404, not 403: don't reveal that other citizens' complaints exist
         raise HTTPException(404, "Complaint not found")
 
+def _normalize_media_url(path: str | None) -> str | None:
+    if not path:
+        return None
+    p = str(path).strip()
+    if p.startswith("http://") or p.startswith("https://") or p.startswith("data:") or p.startswith("blob:"):
+        return p
+    if p.startswith("/uploads/") or p.startswith("/media/"):
+        return p
+    if p.startswith("uploads/"):
+        return f"/{p}"
+    if p.startswith("media/"):
+        return f"/{p}"
+    if p.startswith("/"):
+        return f"/uploads{p}"
+    return f"/uploads/{p}"
+
+
 def _history(db, cid):
     rows = db.execute(text(
         "SELECT id, COALESCE(old_status, status) AS old_status, COALESCE(new_status, status) AS new_status, "
-        "COALESCE(comment, note) AS comment, COALESCE(after_photo_url, photo_path) AS after_photo_url, created_at "
+        "COALESCE(comment, note) AS comment, "
+        "CASE WHEN (new_status = 'resolved' OR status = 'resolved') THEN COALESCE(after_photo_url, photo_path) ELSE after_photo_url END AS after_photo_url, "
+        "created_at "
         "FROM status_history WHERE CAST(complaint_id AS TEXT)=:c ORDER BY created_at"
     ), {"c": str(cid)}).mappings().all()
-    return public_history(rows)
+    res = public_history(rows)
+    for r in res:
+        if r.get("after_photo_url"):
+            r["after_photo_url"] = _normalize_media_url(r["after_photo_url"])
+    return res
 
 @router.get("/complaints/mine")
 def mine(db=Depends(get_db), user=Depends(get_current_user)):
@@ -39,7 +62,7 @@ def mine(db=Depends(get_db), user=Depends(get_current_user)):
       ORDER BY c.created_at DESC"""), {"u": str(uid)}).mappings().all()
     items = [{"id": str(r["id"]), "issue_type": r["issue_type"], "status": norm(r["status"]),
               "priority_band": r["priority_band"], "created_at": iso(r["created_at"]),
-              "thumbnail": r["thumbnail"]} for r in rows]
+              "thumbnail": _normalize_media_url(r["thumbnail"])} for r in rows]
     return {"stats": compute_stats([i["status"] for i in items]), "items": items}
 
 @router.get("/complaints/{cid}")
@@ -48,7 +71,8 @@ def detail(cid: str, db=Depends(get_db), user=Depends(get_current_user)):
     _require_owned(db, cid, uid)
     c = db.execute(text(
         "SELECT id, COALESCE(issue_type, category) AS issue_type, status, "
-        "COALESCE(priority_band, upper(priority_level)) AS priority_band, created_at, updated_at "
+        "COALESCE(priority_band, upper(priority_level)) AS priority_band, created_at, updated_at, "
+        "before_photo_path, after_photo_path "
         "FROM complaints WHERE CAST(id AS TEXT)=:c"
     ), {"c": str(cid)}).mappings().first()
     mine_r = db.execute(text("""
@@ -60,11 +84,12 @@ def detail(cid: str, db=Depends(get_db), user=Depends(get_current_user)):
       ORDER BY created_at LIMIT 1"""),
       {"c": str(cid), "u": str(uid)}).mappings().first()
     hist = _history(db, cid)
-    after = next((h["after_photo_url"] for h in reversed(hist) if h["after_photo_url"]), None)
+    after = _normalize_media_url(c.get("after_photo_path")) or next((h["after_photo_url"] for h in reversed(hist) if h.get("after_photo_url")), None)
+    before = _normalize_media_url(c.get("before_photo_path") or (mine_r["image_url"] if mine_r else None))
     return {
         "id": str(c["id"]), "issue_type": c["issue_type"], "status": norm(c["status"]),
         "priority_band": c["priority_band"], "created_at": iso(c["created_at"]), "updated_at": iso(c["updated_at"]),
-        "before_photo_url": mine_r["image_url"] if mine_r else None,
+        "before_photo_url": before,
         "after_photo_url": after if norm(c["status"]) == "resolved" else None,
         "original_description": mine_r["original_description"] if mine_r else "",
         "translated_description": mine_r["translated_description"] if mine_r else "",

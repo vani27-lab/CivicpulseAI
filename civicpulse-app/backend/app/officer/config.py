@@ -3,6 +3,9 @@
 Read lazily on each call so tests can monkeypatch the environment."""
 import os
 from dataclasses import dataclass
+from pathlib import Path
+
+UPLOAD_DIR = Path(__file__).resolve().parent.parent.parent / "uploads"
 
 
 def _bool(name: str, default: bool) -> bool:
@@ -42,7 +45,7 @@ def get_settings() -> Settings:
         admin_role=os.getenv("M5_ADMIN_ROLE", "admin").strip().lower(),
         status_style=os.getenv("M5_STATUS_STYLE", "snake").strip().lower(),
         enable_rejected=_bool("M5_ENABLE_REJECTED", True),
-        upload_dir=os.getenv("M5_UPLOAD_DIR", "uploads"),
+        upload_dir=os.getenv("M5_UPLOAD_DIR") or os.getenv("UPLOAD_DIR") or str(UPLOAD_DIR),
         media_base_url=os.getenv("M5_MEDIA_BASE_URL", "/media").rstrip("/"),
         max_upload_bytes=int(os.getenv("M5_MAX_UPLOAD_MB", "8")) * 1024 * 1024,
         duplicate_service_module=os.getenv("M4_DUPLICATE_SERVICE_MODULE", "app.services.duplicate_service"),

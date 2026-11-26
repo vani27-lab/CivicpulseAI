@@ -76,13 +76,31 @@ def get_heatmap(db, filters: ComplaintFilters) -> dict:
     return {"points": points, "count": len(points)}
 
 
+def _normalize_media_url(path: str | None) -> str | None:
+    if not path:
+        return None
+    p = str(path).strip()
+    if p.startswith("http://") or p.startswith("https://") or p.startswith("data:") or p.startswith("blob:"):
+        return p
+    if p.startswith("/uploads/") or p.startswith("/media/"):
+        return p
+    if p.startswith("uploads/"):
+        return f"/{p}"
+    if p.startswith("media/"):
+        return f"/{p}"
+    if p.startswith("/"):
+        return f"/uploads{p}"
+    return f"/uploads/{p}"
+
+
 def get_complaint_detail(db, complaint_id, *, role_is_admin: bool, settings: Settings) -> dict:
     cid = str(complaint_id)
     row = db.execute(
         text(
-            "SELECT c.id, c.category AS issue_type, c.status, c.department_id, d.name AS department_name, c.report_count, "
-            "c.priority_score, upper(c.priority_level) AS priority_band, c.priority_explanation AS priority_reason, "
-            "c.created_at, c.updated_at, c.latitude AS latitude, c.longitude AS longitude "
+            "SELECT c.id, COALESCE(c.issue_type, c.category) AS issue_type, c.status, c.department_id, d.name AS department_name, c.report_count, "
+            "c.priority_score, upper(COALESCE(c.priority_band, c.priority_level)) AS priority_band, COALESCE(c.priority_reason, c.priority_explanation) AS priority_reason, "
+            "c.created_at, c.updated_at, c.latitude AS latitude, c.longitude AS longitude, "
+            "c.before_photo_path, c.after_photo_path "
             "FROM complaints c LEFT JOIN departments d ON d.id = c.department_id WHERE CAST(c.id AS TEXT) = :id"
         ),
         {"id": cid},
@@ -91,10 +109,10 @@ def get_complaint_detail(db, complaint_id, *, role_is_admin: bool, settings: Set
         raise NotFoundError("complaint_not_found", "That complaint does not exist.")
 
     reports = [
-        {**dict(r), "id": str(r["id"])}
+        {**dict(r), "id": str(r["id"]), "image_url": _normalize_media_url(r["image_url"])}
         for r in db.execute(
             text(
-                "SELECT id, image_path AS image_url, description_original AS original_description, "
+                "SELECT id, COALESCE(image_url, image_path) AS image_url, description_original AS original_description, "
                 "description_english AS translated_description, latitude, longitude, "
                 "location_accuracy_m AS gps_accuracy, NULL AS ai_confidence, NULL AS ai_severity, created_at "
                 "FROM reports WHERE CAST(complaint_id AS TEXT) = :id ORDER BY created_at ASC"
@@ -110,7 +128,7 @@ def get_complaint_detail(db, complaint_id, *, role_is_admin: bool, settings: Set
             "officer_id": _sid(r["officer_id"] or r["changed_by_id"]),
             "officer_name": r["officer_name"],
             "comment": r["comment"] or r["note"],
-            "after_photo_url": r["after_photo_url"] or r["photo_path"],
+            "after_photo_url": _normalize_media_url(r["after_photo_url"] or (r["photo_path"] if (_normalized(r["new_status"] or r["status"]) == "resolved") else None)),
             "created_at": r["created_at"],
         }
         for r in db.execute(
@@ -148,7 +166,7 @@ def get_complaint_detail(db, complaint_id, *, role_is_admin: bool, settings: Set
     primary = reports[0] if reports else {}
     current_status = normalize_status(row["status"])
     allowed = allowed_next(current_status, role_is_admin, settings.enable_rejected) if current_status else []
-    after_photo = next((h["after_photo_url"] for h in reversed(history) if h["after_photo_url"]), None)
+    after_photo = _normalize_media_url(row.get("after_photo_path")) or next((h["after_photo_url"] for h in reversed(history) if h["after_photo_url"]), None)
 
     return {
         "id": str(row["id"]),
@@ -180,7 +198,7 @@ def get_complaint_detail(db, complaint_id, *, role_is_admin: bool, settings: Set
         "duplicate_candidates": duplicates_gateway.candidates_for(db, cid),
         "allowed_next_statuses": [s.value for s in allowed],
         "can_override": role_is_admin,
-        "before_photo_url": primary.get("image_url"),
+        "before_photo_url": _normalize_media_url(row.get("before_photo_path") or primary.get("image_url")),
         "after_photo_url": after_photo,
     }
 
@@ -245,8 +263,19 @@ def update_status(
         now_ts = datetime.utcnow()
 
         db.execute(
-            text("UPDATE complaints SET status = :s, updated_at = :ts WHERE CAST(id AS TEXT) = :id"),
-            {"s": db_status, "ts": now_ts, "id": cid},
+            text(
+                "UPDATE complaints SET status = :s, updated_at = :ts, "
+                "after_photo_path = COALESCE(:photo, after_photo_path), "
+                "resolved_at = CASE WHEN :is_resolved THEN :ts ELSE resolved_at END "
+                "WHERE CAST(id AS TEXT) = :id"
+            ),
+            {
+                "s": db_status,
+                "ts": now_ts,
+                "photo": saved.url if saved else None,
+                "is_resolved": (new_status == Status.RESOLVED),
+                "id": cid,
+            },
         )
         db.execute(
             text(

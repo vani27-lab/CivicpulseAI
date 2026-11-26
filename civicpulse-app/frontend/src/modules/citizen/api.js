@@ -9,7 +9,15 @@ async function req(path, opts = {}) {
   if (!res.ok) throw new ApiError(res.status, (await res.json().catch(() => ({}))).detail || res.statusText);
   return res.status === 204 ? null : res.json();
 }
-export const mediaUrl = (u) => (!u ? null : /^https?:/.test(u) ? u : BASE + u);
+export const mediaUrl = (u) => {
+  if (!u) return null;
+  if (/^(https?:|data:|blob:)/.test(u)) return u;
+  let clean = u.startsWith("/") ? u : `/${u}`;
+  if (!clean.startsWith("/uploads/") && !clean.startsWith("/media/")) {
+    clean = `/uploads${clean}`;
+  }
+  return BASE + clean;
+};
 export const getMine = () => req("/complaints/mine");
 export const getComplaint = (id) => req(`/complaints/${id}`);
 export const getHistory = (id) => req(`/complaints/${id}/history`);

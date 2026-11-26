@@ -13,6 +13,7 @@ ENV_FILE = Path(__file__).resolve().parent.parent.parent / ".env"
 
 
 DB_FILE = Path(__file__).resolve().parent.parent.parent / "civicpulse.db"
+UPLOAD_DIR = Path(__file__).resolve().parent.parent.parent / "uploads"
 
 
 class Settings(BaseSettings):
@@ -32,7 +33,7 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
 
     # Where complaint photographs will be saved (used from Module 2 onward)
-    upload_dir: str = "uploads"
+    upload_dir: str = os.getenv("UPLOAD_DIR") or str(UPLOAD_DIR)
     max_upload_mb: int = 10
 
     # Demo data

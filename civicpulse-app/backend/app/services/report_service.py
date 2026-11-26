@@ -47,52 +47,70 @@ def create_report(
     location_source: LocationSource,
 ) -> tuple[Report, Complaint]:
     # 1. AI Intelligence Engine (Module 3)
+    ai_res = None
     try:
         from app.modules.ai_engine.service import classify_complaint
         img_bytes = (Path(settings.upload_dir) / image.relative_path).read_bytes()
         ai_res = classify_complaint(img_bytes, description, language)
-    except Exception as e:
-        from app.modules.ai_engine.schemas import ClassificationResult
-        # Intelligent fallback based on description keywords if vision API is unconfigured
-        desc_lower = (description or "").lower()
-        if "pothole" in desc_lower or "road" in desc_lower:
-            fallback_type = "pothole"
-            sev = 3
-        elif "garbage" in desc_lower or "trash" in desc_lower or "waste" in desc_lower:
-            fallback_type = "garbage"
-            sev = 2
-        elif "light" in desc_lower or "street" in desc_lower or "dark" in desc_lower:
-            fallback_type = "streetlight"
-            sev = 2
-        elif "drain" in desc_lower or "water" in desc_lower or "sewage" in desc_lower:
-            fallback_type = "drainage"
-            sev = 3
-        else:
-            fallback_type = "unclassified"
-            sev = 1
+    except Exception:
+        ai_res = None
 
+    # If Vision AI is unavailable or returned unclassified, use description keyword heuristic
+    if not ai_res or str(ai_res.issue_type).lower() in ("unclassified", "other") or (ai_res.confidence or 0.0) == 0.0:
+        from app.modules.ai_engine.constants import IssueType, SOURCE_FALLBACK
+        desc_lower = (description or "").lower()
+        if any(w in desc_lower for w in ["pothole", "road", "crater", "asphalt", "गड्ढा", "सड़क"]):
+            fallback_type = IssueType.POTHOLE
+            sev = 3
+            conf = 0.85
+            reason = "Keyword heuristic: identified pothole / road damage from description (Vision AI fallback)"
+        elif any(w in desc_lower for w in ["garbage", "trash", "waste", "dump", "कचरा", "कूड़ा"]):
+            fallback_type = IssueType.GARBAGE
+            sev = 2
+            conf = 0.85
+            reason = "Keyword heuristic: identified garbage / sanitation issue from description (Vision AI fallback)"
+        elif any(w in desc_lower for w in ["streetlight", "light", "lamp", "dark", "बिजली", "बत्ती"]):
+            fallback_type = IssueType.BROKEN_STREETLIGHT
+            sev = 2
+            conf = 0.85
+            reason = "Keyword heuristic: identified streetlight / electrical issue from description (Vision AI fallback)"
+        elif any(w in desc_lower for w in ["drain", "water", "sewage", "overflow", "नाली", "पानी", "सीवर"]):
+            fallback_type = IssueType.BLOCKED_DRAIN
+            sev = 3
+            conf = 0.85
+            reason = "Keyword heuristic: identified drainage / water issue from description (Vision AI fallback)"
+        else:
+            fallback_type = IssueType.UNCLASSIFIED
+            sev = 1
+            conf = 0.0
+            reason = ai_res.reason if ai_res else "Manual review needed"
+
+        from app.modules.ai_engine.schemas import ClassificationResult
         ai_res = ClassificationResult(
             issue_type=fallback_type,
             severity=sev,
-            confidence=0.85 if fallback_type != "unclassified" else 0.0,
-            reason=f"Keyword heuristic: identified {fallback_type}" if fallback_type != "unclassified" else "Manual review needed",
+            confidence=conf,
+            reason=reason,
             detected_language=language or "en",
             original_text=description,
-            translated_text=description if language == "en" else "",
-            needs_review=(fallback_type == "unclassified"),
-            source="demo_fallback",
+            translated_text=description if language == "en" else (ai_res.translated_text if ai_res else ""),
+            needs_review=(fallback_type == IssueType.UNCLASSIFIED),
+            source=SOURCE_FALLBACK,
         )
 
     # 2. Map issue type to ComplaintCategory
     category_map = {
         "pothole": ComplaintCategory.POTHOLE,
+        "road_damage": ComplaintCategory.POTHOLE,
         "garbage": ComplaintCategory.GARBAGE,
+        "broken_streetlight": ComplaintCategory.STREETLIGHT,
         "streetlight": ComplaintCategory.STREETLIGHT,
+        "blocked_drain": ComplaintCategory.DRAINAGE,
         "drainage": ComplaintCategory.DRAINAGE,
         "other": ComplaintCategory.OTHER,
         "unclassified": ComplaintCategory.UNCLASSIFIED,
     }
-    cat = category_map.get(ai_res.issue_type.lower(), ComplaintCategory.UNCLASSIFIED)
+    cat = category_map.get(str(ai_res.issue_type).lower(), ComplaintCategory.UNCLASSIFIED)
 
     # 3. Department Routing (Module 4)
     dept_code_map = {
